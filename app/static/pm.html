@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ИИ-помощник продукт-менеджера · store.softline.ru</title>
+<style>
+:root{--bg:#0f1420;--card:#171e2e;--line:#273149;--fg:#e7ecf5;--mut:#93a0b8;--acc:#4f8cff;--ok:#2fbf71;--warn:#f0b429;--bad:#ef5b5b}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--fg)}
+header{padding:14px 22px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header h1{font-size:18px;margin:0}.badge{font-size:12px;padding:2px 8px;border-radius:10px;background:#22304d;color:var(--mut)}
+nav{display:flex;gap:4px;padding:8px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+nav button{background:none;border:1px solid transparent;color:var(--mut);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:14px}
+nav button.on{color:var(--fg);border-color:var(--line);background:var(--card)}
+main{padding:18px 22px;max-width:1280px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:12px 0 6px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--mut);font-weight:500}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:14px}.btn.sec{background:#2a3550}.btn:disabled{opacity:.5}
+.st-ok{color:var(--ok)}.st-warn{color:var(--warn)}.st-bad{color:var(--bad)}.mut{color:var(--mut)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.tag{display:inline-block;background:#3b2d63;color:#d7c8ff;border-radius:6px;padding:1px 7px;font-size:12px;margin-right:4px}
+textarea,input,select{background:#0c111b;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;width:100%}
+pre{white-space:pre-wrap;background:#0c111b;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:480px;overflow:auto}
+.big{font-size:26px;font-weight:700}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hidden{display:none}
+.gap{background:#3a2f12;border-left:3px solid var(--warn);padding:6px 10px;margin:4px 0;border-radius:4px}
+.q{background:#13203a;border-left:3px solid var(--acc);padding:6px 10px;margin:4px 0;border-radius:4px}
+</style></head><body>
+<header><h1>ИИ-помощник продукт-менеджера</h1><span class="badge">store.softline.ru</span>
+<span class="badge" id="ds">загрузка…</span><span class="badge" id="llm"></span><span class="badge" id="ym"></span>
+<a href="/sales" class="mut" style="margin-left:auto">режим «отдел продаж» (наработка до спринта) →</a></header>
+<nav id="nav"><button data-t="signals" class="on">Сигналы</button><button data-t="ask">Спросить агента</button><button data-t="backlog">Бэклог</button>
+<button data-t="effect">Эффект после релиза</button><button data-t="settings">Настройки и данные</button></nav>
+<main>
+<section id="t-signals">
+ <div class="card"><div class="row"><h2 style="margin:0">Проактивный скан</h2><button class="btn" onclick="scan()">Запустить скан</button><span class="mut" id="scanInfo"></span></div>
+ <div id="scanOut" class="mut" style="margin-top:8px">Агент регулярно сверяет продажи, Метрику, релизы, бэклог, исследования и конкурентный анализ.</div></div>
+ <div id="report"></div>
+</section>
+<section id="t-ask" class="hidden"><div class="card"><h2>Вопрос агенту</h2>
+ <div class="row" style="margin-bottom:8px">
+ <span id="examples"></span></div>
+ <textarea id="qq" rows="2" placeholder="Задайте вопрос по данным: сигналы, релизы, бэклог, интервью, конкуренты"></textarea>
+ <div class="row" style="margin-top:8px"><button class="btn" onclick="ask()">Спросить</button><span class="mut" id="askMeta"></span></div>
+ <div id="askOut" style="margin-top:10px"></div></div></section>
+<section id="t-backlog" class="hidden">
+ <div class="card"><div class="row"><h2 style="margin:0">Бэклог с приоритизацией</h2><a class="btn sec" href="/api/pm/backlog.csv" target="_blank">Экспорт CSV (Jira)</a></div>
+ <p class="mut">Приоритет = влияние метрики (справочник) × (1 + число подтверждающих источников). Задачи агента помечены тегом.</p><div id="blOut"></div></div>
+ <div class="card"><h2>Предложения агента по изменению задач</h2><div id="chOut"></div></div>
+ <div class="card"><h2>Новая задача вручную (с тегом агента)</h2><div class="grid"><input id="ntTitle" placeholder="Название"><input id="ntMetrics" placeholder="Связанные метрики (metric_id через запятую)"></div>
+ <textarea id="ntDesc" rows="2" placeholder="Описание, гипотеза, критерий успеха" style="margin-top:8px"></textarea><button class="btn" style="margin-top:8px" onclick="newTask()">В бэклог</button></div>
+ <div class="card"><h2>Журнал сообщений ПМ</h2><div id="ntfOut"></div></div>
+</section>
+<section id="t-effect" class="hidden">
+ <div class="card"><h2>Замер эффекта: 4 недели до / после, контрольная группа, правило закрытия</h2>
+ <div class="grid"><div><label class="mut">Семейство</label><select id="efFam"></select></div><div><label class="mut">Дата релиза / исправления</label><input id="efDate" placeholder="ГГГГ-ММ-ДД"></div></div>
+ <label class="mut" style="display:block;margin-top:8px"><input type="checkbox" id="efSim" style="width:auto"> симуляция: добавить недели после исправления (в датасете их нет) — формат «ГГГГ-ММ-ДД=индекс», через запятую</label>
+ <input id="efWeeks" placeholder="ГГГГ-ММ-ДД=индекс, …">
+ <button class="btn" style="margin-top:8px" onclick="eff()">Оценить</button><div id="efOut" style="margin-top:10px"></div></div>
+ <div class="card"><h2>Пост-релизный мониторинг всех релизов</h2><div id="reOut" class="mut">…</div></div>
+</section>
+<section id="t-settings" class="hidden">
+ <div class="card"><h2>Источники данных</h2><div id="srcOut"></div></div>
+ <div class="card"><h2>Яндекс Метрика</h2><div id="ymOut"></div><button class="btn sec" style="margin-top:8px" onclick="ymSync()">Синхронизировать (Reporting API)</button></div>
+ <div class="card"><h2>Дообучение в закрытом контуре: новое исследование / интервью</h2><p class="mut">xlsx (широкая таблица: строка = респондент), md, txt, csv. Сразу попадает в индекс и в перекрёстную проверку.</p>
+ <input type="file" id="resFile"><button class="btn" style="margin-top:8px" onclick="upload()">Загрузить</button><div id="upOut" class="mut"></div></div>
+ <div class="card"><h2>Настраиваемые параметры и метрики</h2><p class="mut">Пороги, окна, контрольные группы, разрывы данных, тег задач. Сохраняется как override, исходный файл не меняется.</p>
+ <textarea id="cfg" rows="18" style="font-family:monospace;font-size:12px"></textarea><div class="row" style="margin-top:8px"><button class="btn" onclick="saveCfg()">Сохранить</button><button class="btn sec" onclick="resetCfg()">Сбросить к умолчаниям</button><span id="cfgMsg" class="mut"></span></div></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtD=s=>s?s.slice(8,10)+'.'+s.slice(5,7)+'.'+s.slice(0,4):'';
+async function api(u,o){const r=await fetch(u,o);if(!r.ok){let t=await r.text();throw new Error(r.status+' '+t)}return r.headers.get('content-type')?.includes('json')?r.json():r.text()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+ document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!=='t-'+b.dataset.t));({backlog:loadBacklog,effect:loadRe,settings:loadSettings})[b.dataset.t]?.()});
+const stCls=s=>/подтвержд/.test(s)&&!/не /.test(s)?'st-ok':(/частич|опроверг/.test(s)?'st-warn':'st-bad');
+async function boot(){try{const h=await api('/health');$('#llm').textContent='LLM: '+h.provider+' · '+h.model;
+ const s=await api('/api/pm/status');$('#ds').textContent=s.loaded?'Обезличенный тестовый датасет организаторов · '+s.metrics_rows+' строк Метрики · '+s.research_chunks+' фрагм. интервью':'данные: '+s.load.state;
+ $('#ym').textContent='Я.Метрика: '+(s.metrika.mode==='live'?'API, счётчик '+s.metrika.counter_id:'тестовые данные датасета');
+ if(!s.loaded){setTimeout(boot,3000);return}
+ const u=await api('/api/pm/ui-config');$('#efFam').innerHTML=u.families.map(f=>`<option>${esc(f)}</option>`).join('');
+ $('#examples').innerHTML=(u.ui.examples||[]).map(x=>`<button class="btn sec" data-q="${esc(x.q)}" onclick="q(this.dataset.q)">${esc(x.label)}</button>`).join(' ');
+ $('#efDate').value=u.ui.effect_default_date||'';$('#efWeeks').value=u.ui.effect_sim_weeks||'';scan()}catch(e){$('#ds').textContent='ошибка: '+e.message}}
+async function scan(){$('#scanInfo').textContent='сканирую…';const r=await api('/api/pm/scan');$('#scanInfo').textContent='';
+ $('#scanOut').innerHTML=(r.signals.length?r.signals.map(s=>`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0"><div><b class="st-bad">${esc(s.short)}: ${s.change_pct}%</b> · ${esc(s.conclusion)}</div><button class="btn" onclick="report('${esc(s.family)}')">Разобрать</button></div>`).join(''):'<p>Сигналов нет</p>')
+ +(r.no_signal.length?`<p class="mut">Без устойчивых отклонений: ${r.no_signal.map(esc).join(', ')}</p>`:'');if(r.signals[0])report(r.signals[0].family)}
+function chart(series,ctrl,sig){const W=560,H=170,P=28;const all=series.concat(ctrl);const mx=Math.max(...all.map(x=>x.orders_index||0))*1.05;const n=series.length;
+ const X=i=>P+i*(W-2*P)/(n-1),Y=v=>H-P-(v/mx)*(H-2*P);const line=(s,k,c,w)=>'<polyline fill="none" stroke="'+c+'" stroke-width="'+w+'" points="'+s.map((x,i)=>x[k]==null?'':X(i)+','+Y(x[k])).filter(Boolean).join(' ')+'"/>';
+ const iOn=series.findIndex(x=>x.week_start===sig.onset_week);const ib=series.findIndex(x=>x.week_start===sig.baseline_from),ie=series.findIndex(x=>x.week_start===sig.baseline_to);
+ let lbl=series.map((x,i)=>i%4===0?`<text x="${X(i)}" y="${H-8}" fill="#93a0b8" font-size="10" text-anchor="middle">${fmtD(x.week_start).slice(0,5)}</text>`:'').join('');
+ return `<svg viewBox="0 0 ${W} ${H}" width="100%"><rect x="${X(ib)}" y="${P/2}" width="${X(ie)-X(ib)}" height="${H-1.5*P}" fill="#2fbf7115"/><rect x="${X(iOn)}" y="${P/2}" width="${X(n-1)-X(iOn)}" height="${H-1.5*P}" fill="#ef5b5b15"/>
+ <line x1="${P}" x2="${W-P}" y1="${Y(100)}" y2="${Y(100)}" stroke="#273149" stroke-dasharray="3 3"/><text x="${P}" y="${Y(100)-3}" fill="#93a0b8" font-size="10">100</text>
+ ${line(series,'orders_index','#4f8cff55',1)}${line(series,'rolling','#4f8cff',2.5)}${line(ctrl,'rolling','#f0b429',2)}${lbl}</svg>
+ <div class="mut" style="font-size:12px"><span style="color:#4f8cff">━</span> ${esc(sig.family)} (скользящее 4 нед; тонкая — недельный индекс) · <span style="color:#f0b429">━</span> контроль · зелёным — база, красным — после разлома</div>`}
+async function report(fam){$('#report').innerHTML='<div class="card mut">Разбираю…</div>';const r=await api('/api/pm/signal/'+encodeURIComponent(fam));
+ const [s1,s2]=await Promise.all([api('/api/pm/sales/'+encodeURIComponent(fam)),api('/api/pm/sales/'+encodeURIComponent(r.control.family))]);const sg=r.signal;
+ $('#report').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(r.short)}: сигнал и перекрёстная проверка</h2><button class="btn" id="applyBtn" onclick="applyRep('${esc(fam)}')">Отправить в бэклог + письмо ПМ</button></div>
+ <div class="grid" style="margin-top:10px"><div><div class="big st-bad">${sg.change_pct}%</div><div class="mut">самостоятельные заказы: ${sg.baseline_mean} → ${sg.after_mean} (база ${fmtD(sg.baseline_from)}–${fmtD(sg.baseline_to)}, после ${fmtD(sg.after_from)}–${fmtD(sg.after_to)})</div>
+ <div style="margin-top:6px">Контроль <b>${esc(r.control.family)}</b>: <b class="${r.control.stable?'st-ok':'st-bad'}">${r.control.change_pct}%</b> · diff-in-diff ${r.control.did_pct} п.п.</div>
+ <div class="mut" style="margin-top:6px">Исключена неделя ${sg.excluded_guard_weeks.map(g=>fmtD(g.week_start)+' (индекс '+g.orders_index+': '+esc(g.comment)+')').join('; ')}</div>
+ <div style="margin-top:8px"><b>Подтверждают ${r.sources_confirm} из ${r.sources_total} источников</b></div></div><div>${chart(s1.series,s2.series,sg)}</div></div>
+ <h3>Вывод</h3><div>${esc(r.conclusion)}</div>
+ <h3>Источники</h3><table>${r.sources.map(s=>`<tr><td style="width:22%">${esc(s.source)}</td><td style="width:20%" class="${stCls(s.status)}">${esc(s.status)}</td><td>${esc(s.evidence)}</td></tr>`).join('')}</table>
+ <h3>Ограничения данных</h3>${r.data_gaps.map(g=>`<div class="gap">${esc(g)}</div>`).join('')}</div>
+ <div class="grid"><div class="card"><h2>Релизы в окне падения</h2><table>${r.releases.map(x=>`<tr><td><b>${x.release_id}</b><br><span class="mut">${fmtD(x.release_date)} · ${x.release_type}</span></td><td><b class="${x.verdict==='главный кандидат'?'st-bad':x.verdict==='фактор'?'st-warn':'mut'}">${x.verdict}</b><br>${esc(x.description)}<br><span class="mut">${esc(x.why)}</span></td></tr>`).join('')}</table></div>
+ <div class="card"><h2>Воронка Метрики (${esc(r.short)})</h2><table>${r.funnel.map(f=>`<tr><td>${esc(f.name)}<br><span class="mut">${f.metric_id}</span></td><td>${f.before_avg!=null?f.before_avg+' → ':''}${f.after_avg??''}${f.change_pct!=null?' ('+f.change_pct+'%)':''}${f.total_after?'<br>всего после релиза: '+f.total_after:''}${f.min!=null?'<br>min '+f.min+' · max '+f.max:''}<br><span class="${f.status==='не измеряется'?'st-warn':'mut'}">${esc(f.status)}</span>${f.note?'<br><span class="mut">'+esc(f.note)+'</span>':''}</td></tr>`).join('')}</table></div></div>
+ <div class="grid"><div class="card"><h2>Бэклог</h2><table>${r.backlog.map(t=>`<tr><td><b>${t.task_id}</b> ${esc(t.title)}<br><span class="mut">${t.status} · приоритет ${esc(t.priority||'—')}</span></td><td>${t.reasons.map(esc).join('; ')}<br><b>${esc(t.proposal)}</b></td></tr>`).join('')}</table></div>
+ <div class="card"><h2>Исследования и конкуренты</h2>${r.research.problem_mentions.map(x=>`<div class="q"><span class="mut">${esc(x.source)}</span><br>${esc(x.text)}</div>`).join('')||'<div class="gap">Жалоб на подбор/покупку в интервью не найдено</div>'}
+ <p class="mut">Упоминаний семейства в интервью: ${r.research.mentions}. Цены: Store дешевле ${r.competitive_facts.store_cheaper_than.length} площадок (до ${r.competitive_facts.max_gap_pct}%), дороже — ${r.competitive_facts.store_more_expensive_than.length}. Итоговый балл Store ${r.competitive_facts.store_weighted_total}, место ${r.competitive_facts.store_weighted_rank} из 11.</p></div></div>
+ <div class="card"><h2>До разработки: гипотезы, проверки, критерий успеха</h2><table>${r.hypotheses.map(h=>`<tr><td><b>${h.id}</b></td><td>${esc(h.text)}<br><span class="mut">Проверка: ${esc(h.check)}</span><br><span class="mut">Критерий: ${esc(h.criteria)}</span></td></tr>`).join('')}</table>
+ <p><b>Критерий успеха:</b> ${esc(r.success_criteria.metric)} ${esc(r.success_criteria.target)}; контроль ${esc(r.success_criteria.control)}. <span class="mut">${esc(r.success_criteria.rule)}</span></p><div id="applyOut"></div></div>`}
+async function applyRep(fam){$('#applyBtn').disabled=true;const r=await api('/api/pm/apply/'+encodeURIComponent(fam),{method:'POST'});
+ $('#applyOut').innerHTML=`<h3>Сделано</h3>${r.applied.map(a=>`<div>${a.kind==='new_task'?'Задача <b>'+esc(a.task_id)+'</b> «'+esc(a.title)+'» '+(a.created?'создана':'уже была')+' · <span class="tag">'+esc((a.tags||[])[0]||'')+'</span>':'Предложено поднять приоритет <b>'+esc(a.task_id)+'</b> → High (ждёт решения ПМ во вкладке «Бэклог»)'}</div>`).join('')}
+ <h3>Письмо ПМ (${esc(r.notification.status)})</h3><pre><b>${esc(r.message.subject)}</b>\n\n${esc(r.message.body)}</pre>`;$('#applyBtn').disabled=false}
+function q(t){$('#qq').value=t;ask()}
+async function ask(){const t=$('#qq').value.trim();if(!t)return;$('#askOut').innerHTML='<p class="mut">Агент думает…</p>';$('#askMeta').textContent='';
+ try{const r=await api('/api/pm/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:t})});
+ $('#askOut').innerHTML=`<pre>${esc(r.answer)}</pre><p class="mut">Источники: ${r.sources.map(esc).join(' · ')||'—'}</p><details><summary class="mut">Трассировка</summary><pre>${esc(JSON.stringify(r.trace,null,1))}</pre></details>`;
+ $('#askMeta').textContent=`${r.intent} · ${r.model||r.provider} · ${r.tokens_in}+${r.tokens_out} ток. · ${r.cost_rub.toFixed(4)} ₽ · ${r.latency_ms} мс${r.cache_hit?' · кэш':''}`}catch(e){$('#askOut').innerHTML='<p class="st-bad">'+esc(e.message)+'</p>'}}
+async function loadBacklog(){const [r,b,n]=await Promise.all([api('/api/pm/backlog/ranked'),api('/api/pm/backlog'),api('/api/pm/notifications')]);
+ $('#blOut').innerHTML=`<table><tr><th>Задача</th><th>Статус</th><th>Score</th><th>Почему</th></tr>${r.items.map(t=>`<tr><td><b>${t.task_id}</b> ${esc(t.title)} ${t.tags.map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</td><td>${t.status} · ${esc(t.priority||'—')}</td><td>${t.score}</td><td class="mut">${esc(t.why)}</td></tr>`).join('')}</table>
+ <h3>Закрытые / выполненные</h3><table>${b.items.filter(t=>['Done','Closed'].includes(t.status)).map(t=>`<tr><td><b>${t.task_id}</b> ${esc(t.title)}</td><td class="mut">${t.status} ${fmtD(t.closed_date)} · ${esc(t.release_id)}</td></tr>`).join('')}</table>`;
+ $('#chOut').innerHTML=b.changes.length?`<table>${b.changes.map(c=>`<tr><td><b>${c.task_id}</b>: ${c.field} ${esc(c.old_value||'—')} → <b>${esc(c.new_value)}</b><br><span class="mut">${esc(c.reason)}</span> <span class="tag">${esc(c.tag)}</span></td><td>${c.status==='proposed'?`<button class="btn" onclick="dec(${c.id},true)">Принять</button> <button class="btn sec" onclick="dec(${c.id},false)">Отклонить</button>`:c.status}</td></tr>`).join('')}</table>`:'<p class="mut">Пока нет. Запустите разбор сигнала и «Отправить в бэклог».</p>';
+ $('#ntfOut').innerHTML=n.items.map(x=>`<details><summary>${esc(x.subject)} <span class="mut">(${x.channel} → ${esc(x.recipient)}, ${x.status})</span></summary><pre>${esc(x.body)}</pre></details>`).join('')||'<p class="mut">Пусто</p>'}
+async function dec(id,ok){await api(`/api/pm/changes/${id}?approve=${ok}`,{method:'POST'});loadBacklog()}
+async function newTask(){const r=await api('/api/pm/backlog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:$('#ntTitle').value,description:$('#ntDesc').value,linked_metric_ids:$('#ntMetrics').value})});loadBacklog()}
+async function eff(){const body={family:$('#efFam').value,fix_date:$('#efDate').value};if($('#efSim').checked){body.extra_weeks=$('#efWeeks').value.split(',').map(x=>x.trim().split('=')).filter(x=>x.length==2).map(([w,v])=>({week_start:w.trim(),orders_index:+v}))}
+ const r=await api('/api/pm/effect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ $('#efOut').innerHTML=`${r.warning?'<div class="gap">'+esc(r.warning)+'</div>':''}<div class="big ${r.verdict==='закрыть задачу'?'st-ok':r.verdict==='ждём данных'?'st-warn':'st-bad'}">${esc(r.verdict)}</div><p>${esc(r.decision)}</p>
+ <table><tr><td>4 нед до</td><td>${r.before_mean}</td></tr><tr><td>4 нед после</td><td>${r.after_mean??'—'} ${r.change_pct!=null?'('+r.change_pct+'%)':''}</td></tr><tr><td>Цель</td><td>${r.target} <span class="mut">${esc(r.target_basis||'')}</span></td></tr>
+ <tr><td>Контроль ${esc(r.control?.family||'')}</td><td>${r.control?.before_mean??'—'} → ${r.control?.after_mean??'—'} ${r.control?.change_pct!=null?'('+r.control.change_pct+'%)':''}</td></tr><tr><td>Diff-in-diff</td><td>${r.did_pct??'—'} п.п.</td></tr></table>`}
+async function loadRe(){const r=await api('/api/pm/release-effects');const rel=Object.fromEntries(r.releases.map(x=>[x.release_id,x]));
+ $('#reOut').innerHTML=`<table><tr><th>Релиз</th><th>Метрика</th><th>4 нед до → после</th></tr>${r.items.map(e=>`<tr><td><b>${e.release_id}</b> <span class="mut">${fmtD(rel[e.release_id]?.release_date)} · ${rel[e.release_id]?.release_type}</span></td><td>${e.metric_id}<br><span class="mut">${esc(e.product)}</span></td><td>${e.before??'—'} → ${e.after??'—'} ${e.change_pct!=null?'<b class="'+(e.change_pct<0?'st-bad':'st-ok')+'">'+e.change_pct+'%</b>':''}${e.note?'<br><span class="st-warn">'+esc(e.note)+'</span>':''}</td></tr>`).join('')}</table>`}
+async function loadSettings(){const [s,c]=await Promise.all([api('/api/pm/status'),api('/api/pm/config')]);
+ $('#srcOut').innerHTML=`<table>${s.sources.map(x=>`<tr><td>${esc(x.file)}</td><td class="mut">${x.kind}</td><td>${x.rows}</td></tr>`).join('')}</table><p class="mut">Метрик: ${s.metrics_ref} · строк Метрики: ${s.metrics_rows} · релизов: ${s.releases} · задач: ${s.backlog} (агента: ${s.backlog_ai}) · недель продаж: ${s.sales_weeks} · фрагментов интервью: ${s.research_chunks} · конкурентного анализа: ${s.competitive_chunks}</p>`;
+ $('#ymOut').innerHTML=`<p>Режим: <b>${s.metrika.mode==='live'?'Reporting API':'тестовые данные (лист «Метрики_данные»)'}</b> · период ${fmtD(s.metrika.date_from)}–${fmtD(s.metrika.date_to)} · строк API: ${s.metrika.api_rows}</p><p class="mut">Для живого режима задайте METRIKA_TOKEN и METRIKA_COUNTER_ID в .env; соответствие метрик — в настройках (metrika.queries).</p>`;
+ $('#cfg').value=JSON.stringify(c,null,2)}
+async function ymSync(){const r=await api('/api/pm/metrika/sync',{method:'POST'});alert(r.detail||JSON.stringify(r))}
+async function saveCfg(){try{const c=JSON.parse($('#cfg').value);await api('/api/pm/config',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)});$('#cfgMsg').textContent='сохранено'}catch(e){$('#cfgMsg').textContent='ошибка: '+e.message}}
+async function resetCfg(){await api('/api/pm/config',{method:'DELETE'});loadSettings();$('#cfgMsg').textContent='сброшено'}
+async function upload(){const f=$('#resFile').files[0];if(!f)return;const fd=new FormData();fd.append('file',f);const r=await api('/api/pm/research/upload',{method:'POST',body:fd});$('#upOut').textContent=`Загружено: ${r.file}, фрагментов: ${r.chunks}`}
+boot();
+</script></body></html>

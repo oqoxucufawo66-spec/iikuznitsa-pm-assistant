@@ -12,13 +12,16 @@ services:
       # Для reverse proxy в контейнере (например Caddy в docker-сети) раскомментируйте и подставьте IP шлюза сети:
       # - "172.18.0.1:8091:8091"
     volumes:
+      # Материалы организаторов (датасет, интервью, конкурентный анализ) — только на сервере, не в git и не в образе.
+      # Каталог должен принадлежать uid 10001 (пользователь pm в контейнере): туда же пишутся загруженные исследования.
+      - ../private-data:/app/private-data
       - iik-var:/app/var
       - iik-artifacts:/app/artifacts
     deploy:
       resources:
         limits:
-          cpus: "0.30"
-          memory: 320M
+          cpus: "0.50"
+          memory: 512M
 volumes:
   iik-var:
   iik-artifacts:

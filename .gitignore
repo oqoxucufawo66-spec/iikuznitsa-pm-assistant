@@ -22,3 +22,5 @@ __pycache__/
 *.log
 artifacts/*.pptx
 artifacts/*.mp4
+private-data/
+*.local.json

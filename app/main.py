@@ -3,8 +3,11 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
+import base64
+import os
+import secrets
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import BaseModel, Field
 from app.agent import run_agent
 from app.config import ARTIFACTS_DIR, DATA_DIR, get_settings
@@ -13,6 +16,8 @@ from app.ingest import ingest_directory, ingest_file
 from app.pptx_gen import generate_sales_pptx
 from app.telegram_stub import handle_telegram_update
 from app.video_avatar import generate_video_script_and_avatar_job
+from app.pm.api import background_load, router as pm_router
+from app.pm.store import init_pm_db
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -24,14 +29,35 @@ async def lifespan(app: FastAPI):
         cnt = conn.execute("SELECT COUNT(*) AS n FROM chunks").fetchone()["n"]
     if cnt == 0 and DATA_DIR.exists():
         ingest_directory(DATA_DIR, compute_embeddings=True)
+    init_pm_db()
+    background_load(force=False)
     yield
 
 
 app = FastAPI(
-    title="ИИ-помощник продакт-менеджера (ИИкузница — ДЕМО-ДАННЫЕ)",
-    version="0.1.0",
+    title="ИИ-помощник продукт-менеджера интернет-магазина (ИИкузница)",
+    version="0.2.0",
     lifespan=lifespan,
 )
+app.include_router(pm_router)
+
+
+@app.middleware("http")
+async def basic_auth(request: Request, call_next):
+    """Стенд с данными задачи закрыт Basic-auth (STAND_USER/STAND_PASSWORD в .env на сервере). /health открыт."""
+    user, pwd = os.environ.get("STAND_USER", ""), os.environ.get("STAND_PASSWORD", "")
+    if user and pwd and request.url.path != "/health":
+        hdr = request.headers.get("authorization", "")
+        ok = False
+        if hdr.lower().startswith("basic "):
+            try:
+                u, _, p = base64.b64decode(hdr[6:]).decode("utf-8").partition(":")
+                ok = secrets.compare_digest(u, user) and secrets.compare_digest(p, pwd)
+            except Exception:
+                ok = False
+        if not ok:
+            return Response("Требуется авторизация", status_code=401, headers={"WWW-Authenticate": 'Basic realm="iik-pm", charset="UTF-8"'})
+    return await call_next(request)
 
 
 class ChatRequest(BaseModel):
@@ -50,6 +76,12 @@ class EscalationResolveRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> HTMLResponse:
+    return HTMLResponse((STATIC_DIR / "pm.html").read_text(encoding="utf-8"))
+
+
+@app.get("/sales", response_class=HTMLResponse)
+def sales_mode() -> HTMLResponse:
+    """Прежний режим (наработка до спринта): ответы отделу продаж по демо-каталогу."""
     return HTMLResponse((STATIC_DIR / "index.html").read_text(encoding="utf-8"))
 
 
@@ -61,14 +93,30 @@ def health() -> dict[str, Any]:
         chunk_n = conn.execute("SELECT COUNT(*) AS n FROM chunks").fetchone()["n"]
     return {
         "status": "ok",
-        "dataset": st.dataset_label,
+        "dataset": "store.softline.ru: обезличенный тестовый датасет организаторов (вне git) + демо-каталог режима /sales",
         "provider": st.provider,
         "model": st.model,
         "ru_hosted": st.ru_hosted,
         "heygen_dry_run": st.heygen_dry_run,
         "products_count": prod_n,
         "chunks_count": chunk_n,
+        "pm_load_state": _pm_load_state(),
+        "pm_data_loaded": _pm_loaded(),
+        "auth_enabled": bool(os.environ.get("STAND_USER") and os.environ.get("STAND_PASSWORD")),
     }
+
+
+def _pm_load_state() -> str:
+    from app.pm.api import _LOAD
+    return _LOAD["state"]
+
+
+def _pm_loaded() -> bool:
+    try:
+        with get_conn() as conn:
+            return conn.execute("SELECT COUNT(*) FROM pm_sales").fetchone()[0] > 0
+    except Exception:
+        return False
 
 
 @app.post("/api/chat")

@@ -7,3 +7,6 @@ __pycache__
 *.db
 artifacts/*.pptx
 tests-log.md
+private-data
+config/*.local.json
+*.local.json

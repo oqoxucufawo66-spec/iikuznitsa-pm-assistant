@@ -1,0 +1,105 @@
+{
+  "_comment": "Публичные настройки ИИ-помощника ПМ (пороги и тексты по умолчанию). Всё, что выведено из материалов организаторов (семейства, метрики, разрывы данных, формулировки гипотез), лежит в файле pm_signals.local.json (PM_DATA_DIR, вне git) и подмешивается при запуске. Правки через PUT /api/pm/config сохраняются как override.",
+  "sales": {
+    "rolling_weeks": 4,
+    "baseline_weeks": 13,
+    "guard_weeks": 1,
+    "min_weeks_after": 4,
+    "drop_threshold_pct": 20,
+    "abs_index_threshold": 90,
+    "abs_consecutive_weeks": 2,
+    "control_max_abs_change_pct": 10,
+    "release_window_days_before": 14,
+    "release_window_days_after": 7,
+    "recovery_tolerance_pct": 10
+  },
+  "research_topics": [
+    "сложно",
+    "неудоб",
+    "непонят",
+    "корзин",
+    "оформ",
+    "счет",
+    "счёт",
+    "цена",
+    "дорог",
+    "менеджер",
+    "продлен"
+  ],
+  "notify": {
+    "channel": "email",
+    "dry_run": true,
+    "to": "pm@example.com"
+  },
+  "ai_tag": "сгенерирована ИИ-помощником",
+  "families": {},
+  "funnel_metrics": [],
+  "known_gaps": [],
+  "orders_metric_id": "orders_index",
+  "release_types": {
+    "offscope": [],
+    "global": [],
+    "product": []
+  },
+  "offscope_keywords": [],
+  "roles": {
+    "traffic_metric": "",
+    "probe_metric": "",
+    "structural_metrics": []
+  },
+  "derived_share": null,
+  "funnel_notes": {},
+  "backlog": {
+    "done_statuses": [
+      "Done",
+      "Closed"
+    ],
+    "raise_from_priorities": [
+      "",
+      "Low",
+      "Medium"
+    ]
+  },
+  "texts": {
+    "metrika_traffic_ok": "трафик на страницы не упал; отрезок воронки ниже не измеряется",
+    "metrika_traffic_bad": "см. воронку",
+    "conclusion_traffic": "Трафик сохранился — потеря ниже по воронке. ",
+    "task_title": "Проверить путь пользователя до заказа: {short} после {rel_main}",
+    "task_linked_metrics": "",
+    "priority_reason": "Связана с сигналом по {short}: отрезок воронки не измеряется"
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "text": "После {rel_main} путь пользователя до заказа стал неудобен или сломан",
+      "check": "ручной проход пути до заказа на desktop/mobile/tablet, сравнение с путём до релиза",
+      "criteria": "найден блокер/ошибка → H1 подтверждена"
+    },
+    {
+      "id": "H2",
+      "text": "Ошибки сбора событий ломают только учёт, причина падения другая",
+      "check": "сверить заказы из BI с событиями Метрики за 4 недели",
+      "criteria": "расхождение объясняет только учёт → искать другую причину"
+    },
+    {
+      "id": "H3",
+      "text": "Часть клиентов ушла в заказ через менеджера (в данных не видно) или повлиял общий фактор магазина",
+      "check": "запросить заказы через менеджеров за те же недели; общий фактор проверить контрольной группой",
+      "criteria": "сумма каналов не упала → это перераспределение, а не потеря"
+    }
+  ],
+  "ui": {
+    "examples": [],
+    "effect_default_date": "",
+    "effect_sim_weeks": ""
+  },
+  "metrika": {
+    "queries": {
+      "visits": {
+        "metrics": "ym:s:visits",
+        "dimensions": "ym:s:date,ym:s:deviceCategory",
+        "unit": "visits"
+      }
+    }
+  }
+}
