@@ -1,0 +1,24 @@
+# Стенд: отдельный compose-проект iik-pm, не связан с другими сервисами на сервере.
+# Запуск из корня репозитория: docker compose -p iik-pm -f deploy/docker-compose.yml up -d --build
+services:
+  app:
+    build: ..
+    restart: unless-stopped
+    env_file: ../.env            # ключ LLM только на сервере (chmod 600), не в git
+    environment:
+      HEYGEN_DRY_RUN: "true"
+    ports:
+      - "127.0.0.1:8091:8091"
+      # Для reverse proxy в контейнере (например Caddy в docker-сети) раскомментируйте и подставьте IP шлюза сети:
+      # - "172.18.0.1:8091:8091"
+    volumes:
+      - iik-var:/app/var
+      - iik-artifacts:/app/artifacts
+    deploy:
+      resources:
+        limits:
+          cpus: "0.30"
+          memory: 320M
+volumes:
+  iik-var:
+  iik-artifacts:

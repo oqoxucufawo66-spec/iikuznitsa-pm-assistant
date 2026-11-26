@@ -1,0 +1,5 @@
+# Блок для общего Caddy (HTTPS выпускается автоматически, Let's Encrypt)
+iik.matustech.ru {
+	encode gzip
+	reverse_proxy 172.18.0.1:8091
+}

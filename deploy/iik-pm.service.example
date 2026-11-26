@@ -1,0 +1,15 @@
+# Альтернатива Docker: systemd-юнит (venv в /opt/iik-pm/.venv, ключи в /opt/iik-pm/.env)
+[Unit]
+Description=IIkuznitsa PM assistant
+After=network-online.target
+
+[Service]
+WorkingDirectory=/opt/iik-pm
+ExecStart=/opt/iik-pm/run.sh
+Environment=PYTHON_BIN=/opt/iik-pm/.venv/bin/python
+Restart=on-failure
+User=iikpm
+MemoryMax=320M
+
+[Install]
+WantedBy=multi-user.target

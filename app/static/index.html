@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ИИ-помощник продакт-менеджера — ДЕМО-ДАННЫЕ</title>
+  <style>
+    :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #475569; --accent: #2563eb; --border: #e2e8f0; --warn-bg: #fef3c7; --warn-txt: #92400e; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
+    .banner { background: var(--warn-bg); color: var(--warn-txt); padding: 8px 16px; font-size: 13px; font-weight: 600; text-align: center; border-bottom: 1px solid #fde68a; }
+    header { background: #0f2240; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    header h1 { margin: 0; font-size: 18px; }
+    .pill { background: rgba(255,255,255,.14); padding: 4px 10px; border-radius: 999px; font-size: 12px; }
+    .container { max-width: 1180px; margin: 18px auto; padding: 0 16px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab-btn { padding: 9px 14px; border: 1px solid var(--border); background: var(--card); border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted); }
+    .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .panel { display: none; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .panel.active { display: block; }
+    .chat-box { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fbfdff; margin-bottom: 12px; }
+    .msg { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; white-space: pre-wrap; line-height: 1.45; }
+    .msg.user { background: #dbeafe; margin-left: 18%; }
+    .msg.bot { background: #f1f5f9; margin-right: 8%; }
+    .msg.esc { background: #fff7ed; border: 1px solid #fdba74; }
+    .meta { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    input[type="text"], select, textarea { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; width: 100%; }
+    button.primary { background: var(--accent); color: #fff; border: 0; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    button.secondary { background: #e2e8f0; color: var(--text); border: 0; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+    .chip { font-size: 12px; padding: 5px 9px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 999px; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: #f8fafc; }
+    .stat .val { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .stat .lbl { font-size: 12px; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: #f1f5f9; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="banner">ДЕМО-ДАННЫЕ: вымышленный интернет-магазин «ТехноВитрина» · Прототип для хакатона «ИИкузница» (трек «Цифровой аватар»)</div>
+  <header>
+    <h1>ИИ-помощник продакт-менеджера</h1>
+    <div class="row">
+      <span class="pill" id="healthPill">Загрузка статуса…</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="openTab('chat', this)">Чат менеджера по продажам</button>
+      <button class="tab-btn" onclick="openTab('gen', this)">Презентации (PPTX) и Цифровой аватар</button>
+      <button class="tab-btn" onclick="openTab('pm', this)">Очередь продакт-менеджера и Аналитика</button>
+      <button class="tab-btn" onclick="openTab('kb', this)">База знаний и загрузка файлов</button>
+    </div>
+
+    <div id="tab-chat" class="panel active">
+      <div class="chips">
+        <span class="chip" onclick="askPreset('Какая мощность всасывания и гарантия у робота-пылесоса AeroClean L10 Pro?')">Характеристики AeroClean L10 Pro</span>
+        <span class="chip" onclick="askPreset('Сравни NordBook Pro 14 OLED и NordBook Air 15 Office')">Сравнить ноутбуки NordBook</span>
+        <span class="chip" onclick="askPreset('Как оплатить по СБП и какие условия доставки по РФ?')">Доставка и СБП</span>
+        <span class="chip" onclick="askPreset('Когда появится в наличии веб-камера StreamEye 4K Desk?')">Эскалация: нет в наличии</span>
+        <span class="chip" onclick="askPreset('Нужна корпоративная скидка на 20 ноутбуков под тендер 44-ФЗ')">Эскалация: тендер / опт</span>
+      </div>
+      <div id="chatBox" class="chat-box">
+        <div class="msg bot">Здравствуйте! Задайте вопрос по товарам, сравнениям, гарантии или доставке (ДЕМО-ДАННЫЕ). Если информации в карточках нет, я передам вопрос продакт-менеджеру.</div>
+      </div>
+      <div class="row">
+        <input type="text" id="qInput" placeholder="Введите вопрос менеджера или клиента…" onkeydown="if(event.key==='Enter') sendChat()" style="flex:1" />
+        <button class="primary" onclick="sendChat()">Спросить агента</button>
+      </div>
+    </div>
+
+    <div id="tab-gen" class="panel">
+      <div class="row" style="margin-bottom:14px">
+        <select id="skuSelect" style="max-width:480px"></select>
+        <button class="primary" onclick="genPptx()">Сгенерировать PPTX (6 слайдов)</button>
+        <button class="secondary" onclick="genVideo()">Сценарий + HeyGen Avatar (dry-run)</button>
+      </div>
+      <div id="genResult">Выберите товар из демо-каталога и нажмите кнопку генерации.</div>
+    </div>
+
+    <div id="tab-pm" class="panel">
+      <div class="grid" id="statsGrid"></div>
+      <h3>Очередь эскалаций продакт-менеджеру</h3>
+      <div id="escList">Загрузка…</div>
+      <h3 style="margin-top:18px">Кластеры повторяющихся вопросов</h3>
+      <div id="clusterList"></div>
+    </div>
+
+    <div id="tab-kb" class="panel">
+      <div class="row" style="margin-bottom:14px">
+        <input type="file" id="kbFile" accept=".json,.csv,.md,.txt,.pdf" />
+        <button class="primary" onclick="uploadKb()">Загрузить в базу знаний</button>
+        <button class="secondary" onclick="loadProducts()">Обновить список</button>
+      </div>
+      <div id="uploadMsg" class="meta"></div>
+      <div id="productsTable"></div>
+    </div>
+  </div>
+
+<script>
+async function refreshHealth() {
+  const r = await fetch('/health');
+  const d = await r.json();
+  document.getElementById('healthPill').textContent =
+    `${d.provider} (${d.model}) · ${d.ru_hosted ? 'РФ-контур' : 'Внешний'} · Товаров: ${d.products_count} · HeyGen: ${d.heygen_dry_run ? 'dry-run' : 'live'}`;
+}
+
+function openTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'pm') loadPmStats();
+  if (name === 'kb' || name === 'gen') loadProducts();
+}
+
+function askPreset(text) {
+  document.getElementById('qInput').value = text;
+  sendChat();
+}
+
+async function sendChat() {
+  const inp = document.getElementById('qInput');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+  const box = document.getElementById('chatBox');
+  const u = document.createElement('div');
+  u.className = 'msg user';
+  u.textContent = q;
+  box.appendChild(u);
+
+  const b = document.createElement('div');
+  b.className = 'msg bot';
+  b.textContent = 'Агент ищет в базе знаний…';
+  box.appendChild(b);
+  box.scrollTop = box.scrollHeight;
+
+  const r = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({question: q})
+  });
+  const d = await r.json();
+  b.className = 'msg ' + (d.escalated ? 'esc' : 'bot');
+  const srcs = (d.sources || []).map(s => `${s.source_id} (${s.score})`).join(', ');
+  const traceStr = (d.trace || []).map(t => t.step).join(' → ');
+  b.innerHTML = `${escapeHtml(d.answer)}<div class="meta">intent: ${d.intent} | conf: ${d.confidence} | повтор: ${d.is_repeat ? 'да ('+d.repeat_cluster_hits+'x)' : 'нет'} | ${d.provider}/${d.model} | токены: ${d.tokens_in}+${d.tokens_out} (${d.cost_rub} ₽${d.cache_hit ? ', кэш' : ''}) | ${d.latency_ms} мс<br>Источники: ${escapeHtml(srcs || '—')}<br>Шаги агента: ${escapeHtml(traceStr)}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
+async function loadProducts() {
+  const r = await fetch('/api/products');
+  const d = await r.json();
+  const sel = document.getElementById('skuSelect');
+  sel.innerHTML = d.items.map(p => `<option value="${p.sku}">${p.sku} — ${escapeHtml(p.name)} (${p.price_rub} ₽)</option>`).join('');
+  document.getElementById('productsTable').innerHTML = `<table><thead><tr><th>SKU</th><th>Товар (ДЕМО-ДАННЫЕ)</th><th>Категория</th><th>Цена</th><th>Статус</th><th>Источник</th></tr></thead><tbody>` +
+    d.items.map(p => `<tr><td>${p.sku}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category)}</td><td>${p.price_rub} ₽</td><td>${p.in_stock ? 'В наличии' : 'Нет в наличии'}</td><td>${escapeHtml(p.source_file)}</td></tr>`).join('') +
+    `</tbody></table>`;
+}
+
+async function genPptx() {
+  const sku = document.getElementById('skuSelect').value;
+  const out = document.getElementById('genResult');
+  out.textContent = 'Генерирую презентацию…';
+  const r = await fetch('/api/generate/pptx', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({sku})});
+  const d = await r.json();
+  out.innerHTML = `<p><b>Готово:</b> ${escapeHtml(d.title)} (${d.slides} слайдов) — <a href="${d.download_url}" target="_blank">Скачать ${escapeHtml(d.filename)}</a></p>`;
+}
+
+async function genVideo() {
+  const sku = document.getElementById('skuSelect').value;
+  const out = document.getElementById('genResult');
+  out.textContent = 'Готовлю сценарий и HeyGen payload (dry-run)…';
+  const r = await fetch('/api/generate/video', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({sku})});
+  const d = await r.json();
+  out.innerHTML = `<h4>Сценарий видеообзора</h4><pre>${escapeHtml(d.script_markdown)}</pre>` +
+    `<h4>HeyGen API v2 Адаптер (${d.heygen_adapter.mode}, кредитов списано: ${d.heygen_adapter.credits_spent})</h4>` +
+    `<p><a href="${d.files.script_url}" target="_blank">Скачать сценарий (.md)</a> · <a href="${d.files.payload_url}" target="_blank">Скачать HeyGen JSON</a></p>` +
+    `<pre>${escapeHtml(JSON.stringify(d.heygen_adapter.payload, null, 2))}</pre>`;
+}
+
+async function loadPmStats() {
+  const [sr, er] = await Promise.all([fetch('/api/stats'), fetch('/api/escalations')]);
+  const s = await sr.json();
+  const e = await er.json();
+  document.getElementById('statsGrid').innerHTML = [
+    ['Всего вопросов', s.total_questions],
+    ['Повторяющихся', `${s.repeat_questions} (${s.repeat_share_pct}%)`],
+    ['Эскалаций ПМ', `${s.escalated_questions} (открыто: ${s.open_escalations})`],
+    ['Средняя цена запроса', `${s.avg_cost_per_question_rub} ₽`],
+    ['Кэш-попаданий LLM', s.cache_hits],
+    ['Средняя задержка', `${s.avg_latency_ms} мс`],
+  ].map(([l, v]) => `<div class="stat"><div class="val">${v}</div><div class="lbl">${l}</div></div>`).join('');
+
+  document.getElementById('escList').innerHTML = e.items.length
+    ? `<table><thead><tr><th>ID</th><th>Вопрос</th><th>Причина</th><th>SKU</th><th>Статус</th></tr></thead><tbody>` +
+      e.items.map(x => `<tr><td>#PM-${x.id}</td><td>${escapeHtml(x.question)}</td><td>${escapeHtml(x.reason)}</td><td>${escapeHtml(x.related_sku || '—')}</td><td>${x.status}</td></tr>`).join('') + `</tbody></table>`
+    : '<p>Эскалаций пока нет.</p>';
+
+  document.getElementById('clusterList').innerHTML = (s.top_repeated_clusters || []).length
+    ? `<table><thead><tr><th>Вопрос-кластер</th><th>Повторов</th></tr></thead><tbody>` +
+      s.top_repeated_clusters.map(c => `<tr><td>${escapeHtml(c.canonical_q)}</td><td>${c.hit_count}</td></tr>`).join('') + `</tbody></table>`
+    : '<p>Данных пока нет.</p>';
+}
+
+async function uploadKb() {
+  const f = document.getElementById('kbFile').files[0];
+  if (!f) return;
+  const fd = new FormData();
+  fd.append('file', f);
+  const r = await fetch('/api/ingest', {method:'POST', body: fd});
+  const d = await r.json();
+  document.getElementById('uploadMsg').textContent = `Загружен ${d.filename}: товаров +${d.products}, фрагментов +${d.chunks}`;
+  loadProducts();
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+refreshHealth();
+loadProducts();
+</script>
+</body>
+</html>

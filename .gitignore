@@ -1,0 +1,24 @@
+# секреты и окружение
+.env
+.env.*
+!.env.example
+secrets/
+*.key
+*.pem
+*.p12
+*credentials*.json
+
+# виртуальные окружения и кэш
+.venv/
+.venv*/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# локальные данные и артефакты прогона
+*.db
+*.sqlite3
+*.log
+artifacts/*.pptx
+artifacts/*.mp4
