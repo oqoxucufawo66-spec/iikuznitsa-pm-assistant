@@ -119,6 +119,7 @@ flowchart TD
 ### Подключаемые провайдеры LLM (включая российский контур 152-ФЗ)
 Слой `app/llm_client.py` поддерживает переключение через переменные окружения (без хардкода ключей):
 - `cloudru` — **Cloud.ru Foundation Models** (`https://foundation-models.api.cloud.ru/v1`), по умолчанию `GigaChat/GigaChat-3-Pro` + запасная `ai-sage/GigaChat3-10B-A1.8B`, эмбеддинги `ai-sage/Giga-Embeddings-instruct-480M` (**российский хостинг**, проверен в работе).
+  - **Open Weights (Apache 2.0):** `LLM_MODEL=openai/gpt-oss-120b`, `LLM_FALLBACK_MODEL=openai/gpt-oss-20b`, `LLM_PRICE_IN_RUB_1M=15.86`, `LLM_PRICE_OUT_RUB_1M=61`, `LLM_REASONING_EFFORT=low`, `LLM_MAX_TOKENS_EXTRA=600` (у рассуждающей модели токены рассуждения входят в лимит ответа). Замена только переменными окружения, код не меняется.
 - `gigachat` — прямой Sberbank GigaChat API (OAuth + `LLM_CA_BUNDLE`).
 - `yandex` — YandexGPT (`LLM_FOLDER_ID` + `Api-Key`).
 - `minimax` / `openrouter` / `openai` — любой OpenAI-compatible шлюз.

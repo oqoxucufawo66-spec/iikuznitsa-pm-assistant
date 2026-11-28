@@ -88,6 +88,8 @@ class Settings:
     heygen_voice_id: str
     telegram_bot_token: str
     dataset_label: str = "ДЕМО-ДАННЫЕ"
+    reasoning_effort: str = ""
+    max_tokens_extra: int = 0
 
 
 def get_settings() -> Settings:
@@ -140,4 +142,6 @@ def get_settings() -> Settings:
         heygen_avatar_id=os.environ.get("HEYGEN_AVATAR_ID") or "Anna_public_3_20240108",
         heygen_voice_id=os.environ.get("HEYGEN_VOICE_ID") or "ru-RU-SvetlanaNeural",
         telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN") or "",
+        reasoning_effort=(os.environ.get("LLM_REASONING_EFFORT") or "").strip().lower(),
+        max_tokens_extra=int(os.environ.get("LLM_MAX_TOKENS_EXTRA") or 0),
     )

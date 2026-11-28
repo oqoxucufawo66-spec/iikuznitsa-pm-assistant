@@ -122,9 +122,12 @@ def chat_completion(
                 payload = {
                     "model": model_id,
                     "messages": messages,
-                    "max_tokens": max_tokens,
+                    # для рассуждающих моделей (например gpt-oss) токены рассуждения входят в max_tokens
+                    "max_tokens": max_tokens + st.max_tokens_extra,
                     "temperature": temperature,
                 }
+                if st.reasoning_effort in ("low", "medium", "high"):
+                    payload["reasoning_effort"] = st.reasoning_effort
                 resp = client.post(f"{st.base_url}/chat/completions", json=payload, headers=headers)
                 if resp.status_code >= 400:
                     last_err = f"HTTP {resp.status_code}"
